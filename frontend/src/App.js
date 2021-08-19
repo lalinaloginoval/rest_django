@@ -44,14 +44,14 @@ class App extends React.Component {
     }
 
     get_headers() {
-        let header = {
+        let headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json; version=v2'
         }
         const cookie = new Cookies()
-        header['Authorization'] = 'Token ' + cookie.get('token')
+        headers['Authorization'] = 'Token ' + cookie.get('token')
 
-        return header;
+        return headers;
     }
 
     get_data() {
