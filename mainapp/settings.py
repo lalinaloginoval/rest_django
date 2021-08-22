@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'django_filters',
+    'graphene_django',
     'drf_yasg',
     'todo',
     'users',
@@ -98,6 +99,10 @@ TEMPLATES = [
         },
     },
 ]
+
+GRAPHENE = {
+    "SCHEMA": "todo.schema.schema"
+}
 
 WSGI_APPLICATION = 'mainapp.wsgi.application'
 
