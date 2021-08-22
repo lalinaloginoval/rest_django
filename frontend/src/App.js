@@ -8,6 +8,9 @@ import ToDoList from "./components/ToDo.js";
 import Menu from './components/Menu.js'
 import Footer from './components/Footer.js'
 import LoginForm from './components/Auth.js'
+import ProjectForm from "./components/ProjectForm.js";
+import ToDoForm from "./components/ToDoForm.js";
+import SearchBar from "./components/SearchBar.js";
 import {Route, Link, Switch, Redirect, HashRouter} from 'react-router-dom'
 import Cookies from 'universal-cookie'
 import './bootstrap/css/bootstrap.min.css'
@@ -22,15 +25,14 @@ const NotFound404 = ({location}) => {
 }
 
 class App extends React.Component {
-    projects;
-
     constructor(props) {
         super(props)
         this.state = {
             'users': [],
             'projects': [],
             'todos': [],
-            'token': ''
+            'token': '',
+            'term': '',
         }
     }
 
@@ -150,12 +152,33 @@ class App extends React.Component {
                                     </li>
                                 </ul>
                             </div>
+                            <div className="row">
+                                <div className="col-sm-12">
+                                    <SearchBar
+                                        term={this.state.term}
+                                        data={this.state.projects}
+                                        update={this.updateData.bind(this)}
+                                    />
+                                </div>
+                            </div>
                         </nav>
                     </header>
                     <Switch>
                         <Route exact path='/' component={() => <UserList users={this.state.users}/>}/>
-                        <Route exact path='/projects' component={() => <ProjectList projects={this.state.projects}/>}/>
-                        <Route exact path='/todos' component={() => <ToDoList todos={this.state.todos}/>}/>
+                        <Route exact path='/projects' component={() => <ProjectList
+                            projects={this.state.projects}
+                            todos={this.state.todos}
+                            deleteProject={(id) => this.deleteProject(id)}/>}/>
+                        <Route exact path='/projects/create' component={() => <ProjectForm
+                            users={this.state.users}
+                            createProject={(name, link, users) => this.createProject(name, link, users)}/>}/>
+                        <Route exact path='/todos' component={() => <ToDoList
+                            todos={this.state.todos}
+                            deleteToDo={(todo) => this.deleteToDo(todo)}/>}/>
+                        <Route exact path='/todos/create' component={() => <ToDoForm
+                            users={this.state.users}
+                            projects={this.state.projects}
+                            createToDo={(text, project, user, is_active) => this.createToDo(text, project, user, is_active)}/>}/>
                         <Route exact path='/login' component={() => <LoginForm
                             get_token={(login, password) => this.get_token(login, password)}/>}/>
                         <Route path="/user/:id"><ProjectByUserList projects={this.state.projects}/></Route>
@@ -166,6 +189,69 @@ class App extends React.Component {
                 <Footer/>
             </div>
         )
+    }
+
+    deleteProject(id) {
+        const headers = this.get_headers()
+        axios.delete(`http://127.0.0.1:8000/api/projects/${id}/`, {headers})
+            .then(response => {
+                this.get_data()
+            }).catch(error => console.log(error))
+    }
+
+    deleteToDo(todo) {
+        const headers = this.get_headers()
+        axios.put(`http://127.0.0.1:8000/api/todos/${todo.id}/`, todo, {headers})
+            .then(response => {
+                this.setState({'is_active': false}, this.get_data)
+            }).catch(error => console.log(error))
+    }
+
+    createProject(name, link, users) {
+        if (!name || !link || users.length === 0) {
+            console.log("Empty params:", name, link, users)
+            return;
+        }
+
+        const headers = this.get_headers()
+        axios.post('http://127.0.0.1:8000/api/projects/',
+            {
+                'name': name,
+                'link': link,
+                'users': users
+            }, {headers})
+            .then(response => {
+                this.get_data()
+            })
+            .catch(error => {
+                console.log(error)
+            })
+    }
+
+    createToDo(text, project, user) {
+        if (!text || !project || !user) {
+            console.log("Empty params:", text, project, user)
+            return;
+        }
+
+        const headers = this.get_headers()
+        axios.post('http://127.0.0.1:8000/api/todos/',
+            {
+                'text': text,
+                'project': project,
+                'user': user,
+                'is_active': true,
+            }, {headers})
+            .then(response => {
+                this.get_data()
+            })
+            .catch(error => {
+                console.log(error)
+            })
+    }
+
+    updateData(config) {
+        this.setState({'projects': config.data, 'term': config.term});
     }
 }
 
